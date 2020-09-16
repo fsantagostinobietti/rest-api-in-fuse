@@ -5,11 +5,7 @@ import java.util.Map;
 import org.apache.camel.Exchange;
 import org.apache.camel.Expression;
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.builder.TransformerBuilder;
-import org.apache.camel.model.dataformat.JacksonXMLDataFormat;
-import org.apache.camel.model.dataformat.JaxbDataFormat;
 import org.apache.camel.model.rest.RestBindingMode;
-import org.apache.camel.spi.DataFormat;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -121,8 +117,8 @@ public class CamelRouter extends RouteBuilder {
 	        		// create REST response (this is actual mapping logic)
 		        	.transform(new Expression() {
 						public <T> T evaluate(Exchange exchange, Class<T> type) {
-							Map response = exchange.getIn().getBody(java.util.Map.class);
-							Map country = (Map) response.get("country");
+							Map<?,?> response = exchange.getIn().getBody(java.util.Map.class);
+							Map<?,?> country = (Map<?,?>) response.get("country");
 							
 							Country countryBean = new Country();
 							countryBean.setName((String)country.get("name"));
