@@ -1,4 +1,4 @@
-package com.redhat.fuse.boosters.rest.http;
+package com.redhat.fuse.boosters.rest.http.service;
 
 import com.redhat.fuse.boosters.rest.http.model.Greetings;
 

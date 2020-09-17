@@ -1,4 +1,4 @@
-package com.redhat.fuse.boosters.rest.http;
+package com.redhat.fuse.boosters.rest.http.router;
 
 import java.util.Map;
 
@@ -13,6 +13,7 @@ import com.redhat.fuse.boosters.rest.http.model.Country;
 import com.redhat.fuse.boosters.rest.http.model.Error;
 import com.redhat.fuse.boosters.rest.http.model.GetCountryRequest;
 import com.redhat.fuse.boosters.rest.http.model.Greetings;
+import com.redhat.fuse.boosters.rest.http.service.CountryISOCodeCache;
 
 /**
  * A simple Camel REST DSL route that implements the greetings service.
@@ -121,7 +122,9 @@ public class CamelRouter extends RouteBuilder {
 							Map<?,?> country = (Map<?,?>) response.get("country");
 							
 							Country countryBean = new Country();
-							countryBean.setName((String)country.get("name"));
+							String countryName = (String)country.get("name");
+							countryBean.setName(countryName);
+							countryBean.setIsoCode(CountryISOCodeCache.lookupCode(countryName));
 							countryBean.setPopulation(Long.parseLong((String) country.get("population")));
 							return (T) countryBean;
 						}
