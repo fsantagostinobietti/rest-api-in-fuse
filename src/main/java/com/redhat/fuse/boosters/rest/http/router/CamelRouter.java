@@ -5,7 +5,9 @@ import java.util.Map;
 import org.apache.camel.Exchange;
 import org.apache.camel.Expression;
 import org.apache.camel.builder.RouteBuilder;
+import org.apache.camel.dataformat.csv.CsvDataFormat;
 import org.apache.camel.model.rest.RestBindingMode;
+import org.apache.camel.processor.aggregate.AggregationStrategy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -124,9 +126,19 @@ public class CamelRouter extends RouteBuilder {
 							Country countryBean = new Country();
 							String countryName = (String)country.get("name");
 							countryBean.setName(countryName);
-							countryBean.setIsoCode(CountryISOCodeCache.lookupCode(countryName));
+							//countryBean.setIsoCode(CountryISOCodeCache.lookupCode(countryName));
 							countryBean.setPopulation(Long.parseLong((String) country.get("population")));
 							return (T) countryBean;
+						}
+					})
+		        	.enrich("bean:countryISOCodeCacheService?method=lookupCode", new AggregationStrategy() {
+						@Override
+						public Exchange aggregate(Exchange orig, Exchange added) {
+							String isoCode = added.getIn().getBody(String.class);
+							Country countryBean = orig.getIn().getBody(Country.class);
+							// update iso_code field
+							countryBean.setIsoCode(isoCode);
+							return orig;
 						}
 					});
       
