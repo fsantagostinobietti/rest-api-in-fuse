@@ -15,6 +15,11 @@ import com.redhat.fuse.boosters.rest.http.model.Country;
 import com.redhat.fuse.boosters.rest.http.model.Error;
 import com.redhat.fuse.boosters.rest.http.model.GetCountryRequest;
 import com.redhat.fuse.boosters.rest.http.model.Greetings;
+import com.redhat.fuse.boosters.rest.http.router.process.AddISOCode;
+import com.redhat.fuse.boosters.rest.http.router.process.GenericExceptionHandler;
+import com.redhat.fuse.boosters.rest.http.router.process.InvalidInputError;
+import com.redhat.fuse.boosters.rest.http.router.process.PrepareRequestJAXB;
+import com.redhat.fuse.boosters.rest.http.router.process.ResponseMapping;
 import com.redhat.fuse.boosters.rest.http.service.CountryISOCodeCache;
 
 /**
@@ -51,16 +56,10 @@ public class CamelRouter extends RouteBuilder {
         /*
          * global error handling 
          */
-        onException(Exception.class).handled(true).transform(new Expression() {
-			@Override
-			public <T> T evaluate(Exchange exchange, Class<T> type) {
-				// retrieve the caught message
-				Exception cause = exchange.getProperty(Exchange.EXCEPTION_CAUGHT, Exception.class);
-				// error response
-				return (T) new Error( cause.toString() );
-			}
-		})
-        .setHeader(Exchange.HTTP_RESPONSE_CODE, constant(500));
+        onException(Exception.class)
+        	.handled(true)	// stop exception propagation
+        	.transform(new GenericExceptionHandler())
+        	.setHeader(Exchange.HTTP_RESPONSE_CODE, constant(500));
         
         /*
          * '/greetings' - hello world endpoint
@@ -79,7 +78,8 @@ public class CamelRouter extends RouteBuilder {
          */
         rest("/country")
         	// inject path param in header as 'country_name' 
-        	.get("/{country_name}").outType(Country.class).route().log("Country name: ${header.country_name}")
+        	.get("/{country_name}")
+        	.outType(Country.class).route().log("Country name: ${header.country_name}")
         	// forward to route 'countryInfo'
         	.to("direct:countryInfo");
         
@@ -87,14 +87,7 @@ public class CamelRouter extends RouteBuilder {
         from("direct:countryInfo")
         	
         	// create request bean (jaxb annotated)
-        	.transform(new Expression() {
-				public <T> T evaluate(Exchange exchange, Class<T> type) {
-					String countryName = (String) exchange.getIn().getHeader("country_name");
-					GetCountryRequest request = new GetCountryRequest();
-					request.setName(countryName);
-					return (T) request;
-				}
-			})
+        	.transform(new PrepareRequestJAXB())
         	// Camel automatically translates jaxb bean into xml
         	.log("Request XML: ${body}")
         	
@@ -102,45 +95,20 @@ public class CamelRouter extends RouteBuilder {
         	// soap envelope to xml request
         	.to("spring-ws:"+WS_URI).log("Response XML: ${body}")
         	
-        	// trick: convert xml response into java Map (simpler and without namespaces)  
+        	// trick: convert xml response into java Map (simpler to parse and without namespaces)  
         	.unmarshal().jacksonxml(java.util.Map.class).log("Response Map: ${body}")
         	
         	.choice()
         		// empty response produce an error message
         		.when(body().isEqualTo("{}"))
-	        		.transform(new Expression() {
-	        			public <T> T evaluate(Exchange exchange, Class<T> type) {
-	        				// error response
-	        				return (T) new Error("Invalid country! Hint: try 'Spain', 'Poland' or 'United Kingdom'");
-	        			}
-	        		})
+	        		.transform(new InvalidInputError())
         			.setHeader(Exchange.HTTP_RESPONSE_CODE, constant(404))
 	        	// valid response
         		.otherwise()
 	        		// create REST response (this is actual mapping logic)
-		        	.transform(new Expression() {
-						public <T> T evaluate(Exchange exchange, Class<T> type) {
-							Map<?,?> response = exchange.getIn().getBody(java.util.Map.class);
-							Map<?,?> country = (Map<?,?>) response.get("country");
-							
-							Country countryBean = new Country();
-							String countryName = (String)country.get("name");
-							countryBean.setName(countryName);
-							//countryBean.setIsoCode(CountryISOCodeCache.lookupCode(countryName));
-							countryBean.setPopulation(Long.parseLong((String) country.get("population")));
-							return (T) countryBean;
-						}
-					})
-		        	.enrich("bean:countryISOCodeCacheService?method=lookupCode", new AggregationStrategy() {
-						@Override
-						public Exchange aggregate(Exchange orig, Exchange added) {
-							String isoCode = added.getIn().getBody(String.class);
-							Country countryBean = orig.getIn().getBody(Country.class);
-							// update iso_code field
-							countryBean.setIsoCode(isoCode);
-							return orig;
-						}
-					});
+		        	.transform(new ResponseMapping())
+		        	// enrich response with info from in-memory cache
+		        	.enrich("bean:countryISOCodeCacheService?method=lookupCode", new AddISOCode());
       
     }
 
