@@ -79,12 +79,18 @@ public class CamelRouter extends RouteBuilder {
         rest("/country")
         	// inject path param in header as 'country_name' 
         	.get("/{country_name}")
-        	.outType(Country.class).route().log("Country name: ${header.country_name}")
-        	// forward to route 'countryInfo'
-        	.to("direct:countryInfo");
+        	// swagger definitions
+        	.id("GetInfo").description("Get country related Info")
+        	.param().name("country_name").description("Country name").endParam()
+        	.outType(Country.class)
+        	.responseMessage().code(500).message("Internal error").endResponseMessage()
+        	.responseMessage().code(404).message("Country not found").endResponseMessage()
+        	// forward to route 'getCountryInfo'
+        	.route().log("Country name: ${header.country_name}")
+        	.to("direct:getCountryInfo");
         
         
-        from("direct:countryInfo")
+        from("direct:getCountryInfo")
         	
         	// create request bean (jaxb annotated)
         	.transform(new PrepareRequestJAXB())
