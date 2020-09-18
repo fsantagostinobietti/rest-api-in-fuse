@@ -3,6 +3,8 @@ package com.redhat.fuse.boosters.rest.http.model;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 
+import org.apache.commons.lang3.text.WordUtils;
+
 /**
  * JAXB annotated bean to produce following XML after marshalling:
  * 
@@ -18,6 +20,7 @@ import javax.xml.bind.annotation.XmlRootElement;
  * @author US00081
  *
  */
+@SuppressWarnings("deprecation")
 @XmlRootElement
 public class GetCountryRequest {
 	
@@ -34,7 +37,8 @@ public class GetCountryRequest {
 		return name;
 	}
 	public void setName(String name) {
-		this.name = name;
+		// remote service requires camel-case country name values
+		this.name = WordUtils.capitalizeFully(name); 
 	}
 	
 	
