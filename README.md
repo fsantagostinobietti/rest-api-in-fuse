@@ -11,7 +11,7 @@ You need to run remote SOAP web service from [**soap-api-in-springboot** project
 Run
 ---
 ```
-$ mvn springboot:run --spring.profiles.active=dev
+$ mvn -Dspring-boot.run.profiles=dev spring-boot:run
 ```
 
 Try it in your browser
