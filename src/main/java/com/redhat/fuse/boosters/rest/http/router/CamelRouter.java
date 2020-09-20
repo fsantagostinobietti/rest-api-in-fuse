@@ -1,26 +1,18 @@
 package com.redhat.fuse.boosters.rest.http.router;
 
-import java.util.Map;
-
 import org.apache.camel.Exchange;
-import org.apache.camel.Expression;
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.dataformat.csv.CsvDataFormat;
 import org.apache.camel.model.rest.RestBindingMode;
-import org.apache.camel.processor.aggregate.AggregationStrategy;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import com.redhat.fuse.boosters.rest.http.model.Country;
-import com.redhat.fuse.boosters.rest.http.model.Error;
-import com.redhat.fuse.boosters.rest.http.model.GetCountryRequest;
 import com.redhat.fuse.boosters.rest.http.model.Greetings;
 import com.redhat.fuse.boosters.rest.http.router.process.AddISOCode;
 import com.redhat.fuse.boosters.rest.http.router.process.GenericExceptionHandler;
 import com.redhat.fuse.boosters.rest.http.router.process.InvalidInputError;
 import com.redhat.fuse.boosters.rest.http.router.process.PrepareRequestJAXB;
 import com.redhat.fuse.boosters.rest.http.router.process.ResponseMapping;
-import com.redhat.fuse.boosters.rest.http.service.CountryISOCodeCache;
 
 /**
  * A simple Camel REST DSL route that implements the greetings service.
@@ -58,7 +50,7 @@ public class CamelRouter extends RouteBuilder {
          */
         onException(Exception.class)
         	.handled(true)	// stop exception propagation
-        	.transform(new GenericExceptionHandler())
+        	.bean(GenericExceptionHandler.class)
         	.setHeader(Exchange.HTTP_RESPONSE_CODE, constant(500));
         
         /*
@@ -93,7 +85,7 @@ public class CamelRouter extends RouteBuilder {
         from("direct:getCountryInfo")
         	
         	// create request bean (jaxb annotated)
-        	.transform(new PrepareRequestJAXB())
+        	.bean(PrepareRequestJAXB.class)
         	// Camel automatically translates jaxb bean into xml
         	.log("Request XML: ${body}")
         	
@@ -107,14 +99,16 @@ public class CamelRouter extends RouteBuilder {
         	.choice()
         		// empty response produce an error message
         		.when(body().isEqualTo("{}"))
-	        		.transform(new InvalidInputError())
+	        		.bean(InvalidInputError.class)
         			.setHeader(Exchange.HTTP_RESPONSE_CODE, constant(404))
 	        	// valid response
         		.otherwise()
 	        		// create REST response (this is actual mapping logic)
-		        	.transform(new ResponseMapping())
+		        	.bean(ResponseMapping.class)
 		        	// enrich response with info from in-memory cache
-		        	.enrich("bean:countryISOCodeCacheService?method=lookupCode", new AddISOCode());
+		        	.enrich("bean:countryISOCodeCacheService?method=lookupCode", new AddISOCode())
+		    .end();
+        	
       
     }
 

@@ -1,18 +1,16 @@
 package com.redhat.fuse.boosters.rest.http.router.process;
 
-import org.apache.camel.Exchange;
-import org.apache.camel.Expression;
+
+import org.apache.camel.Header;
 
 import com.redhat.fuse.boosters.rest.http.model.GetCountryRequest;
 
-public class PrepareRequestJAXB implements Expression {
+public class PrepareRequestJAXB {
 
-	@Override
-	public <T> T evaluate(Exchange exchange, Class<T> type) {
-		String countryName = (String) exchange.getIn().getHeader("country_name");
+	public GetCountryRequest evaluate(@Header("country_name") String countryName) {
 		GetCountryRequest request = new GetCountryRequest();
 		request.setName(countryName);
-		return (T) request;
+		return request;
 	}
 
 }
