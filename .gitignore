@@ -27,3 +27,6 @@ hs_err_pid*
 .project
 .settings/
 /target/
+
+# tmp files
+/tmp/
