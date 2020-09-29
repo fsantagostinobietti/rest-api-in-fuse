@@ -15,36 +15,18 @@ import com.redhat.fuse.boosters.rest.http.router.process.PrepareRequestJAXB;
 import com.redhat.fuse.boosters.rest.http.router.process.ResponseMapping;
 
 /**
- * A simple Camel REST DSL route that implements the greetings service.
+ *  Camel REST DSL route that implements country info service.
  * 
  */
 @Component
-public class CamelRouter extends RouteBuilder {
+public class CountryInfoRouter extends RouteBuilder {
 
 	@Value("${ws.uri}")
 	String WS_URI;
 	
     @Override
     public void configure() throws Exception {
-
-        /*
-         * endpoints REST configuration
-         */
-        restConfiguration()
-        	// consume/produce JSON data
-        	.bindingMode(RestBindingMode.json)
-        	.skipBindingOnErrorCode(false) // I always want json binding 
-        	// swagger definition (camel-swagger-java module)
-        	.apiContextPath("/api-doc")
-        		.apiProperty("base.path", "/camel");  // inform swagger of api base path
-        		/*.apiProperty("api.path", "/")
-                .apiProperty("api.title", "Greeting REST API")
-                .apiProperty("api.version", "1.0")
-                .apiProperty("cors", "true")
-                .apiProperty("host", "")
-                .apiContextRouteId("doc-api")
-            	.component("servlet")*/
-        
+    	
         /*
          * global error handling 
          */
@@ -52,17 +34,7 @@ public class CamelRouter extends RouteBuilder {
         	.handled(true)	// stop exception propagation
         	.bean(GenericExceptionHandler.class)
         	.setHeader(Exchange.HTTP_RESPONSE_CODE, constant(500));
-        
-        /*
-         * '/greetings' - hello world endpoint
-         */
-        rest("/greetings").description("Greeting to {name}")
-            .get("/{name}").outType(Greetings.class)
-                .route().routeId("greeting-api")
-                .to("direct:greetingsImpl");
-        from("direct:greetingsImpl").description("Greetings REST service implementation route")
-            .streamCaching()
-            .to("bean:greetingsService?method=getGreetings");     
+
         
         
         /*
