@@ -21,9 +21,6 @@ import com.redhat.fuse.boosters.rest.http.router.process.ResponseMapping;
 @Component
 public class CountryInfoRouter extends RouteBuilder {
 
-	@Value("${ws.uri}")
-	String WS_URI;
-	
     @Override
     public void configure() throws Exception {
     	
@@ -63,7 +60,7 @@ public class CountryInfoRouter extends RouteBuilder {
         	
         	// invoke remote soap service using 'spring-ws'. It's responsible of adding 
         	// soap envelope to xml request
-        	.to("spring-ws:"+WS_URI).log("Response XML: ${body}")
+        	.to("spring-ws:{{ws.uri}}").log("Response XML: ${body}")
         	
         	// trick: convert xml response into java Map (simpler to parse and without namespaces)  
         	.unmarshal().jacksonxml(java.util.Map.class).log("Response Map: ${body}")

@@ -40,8 +40,8 @@ import com.redhat.fuse.boosters.rest.http.service.CountryISOCodeCache;
 @MockEndpointsAndSkip("spring-ws:*")
 public class RoutesTest {
 	
-	@Autowired
-    protected CamelContext camelContext;
+	//@Autowired
+    //protected CamelContext camelContext;
 	
 	@Produce
 	protected ProducerTemplate start;
@@ -81,12 +81,11 @@ public class RoutesTest {
 	
 	
 	
-	@Value("${ws.uri}")
-	String wsURI;
+	@EndpointInject(uri = "mock:spring-ws:{{ws.uri}}")
+	MockEndpoint mockWs;
 	
 	@Test
 	public void testCountryInfoRoute() throws Exception {
-		MockEndpoint mockWs = MockEndpoint.resolve( camelContext, "mock:spring-ws:"+wsURI);
 		
 		mockWs.expectedMessageCount(1);
 		
