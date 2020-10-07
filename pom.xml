@@ -8,7 +8,8 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <fuse.bom.version>7.7.0.fuse-sb2-770010-redhat-00001</fuse.bom.version>  <!-- SpringBoot2 -->
+    <fuse.bom.version>7.7.0.fuse-sb2-770010-redhat-00001</fuse.bom.version>  <!-- Fuse with SpringBoot2 -->
+    <camel.maven.plugin.version>2.23.2.fuse-770010-redhat-00001</camel.maven.plugin.version>
     <!-- version of Arquillian -->
     <arquillian.cube.version>1.17.1</arquillian.cube.version>
     <arquillian.version>1.4.0.Final</arquillian.version>
@@ -198,6 +199,43 @@
           </execution>
         </executions>
       </plugin>
+      
+	  <!-- Validation of camel routes -->
+	  <plugin>
+	    <groupId>org.apache.camel</groupId>
+	    <artifactId>camel-maven-plugin</artifactId>
+	    <version>${camel.maven.plugin.version}</version>
+		<executions>
+			<execution>
+				<phase>process-classes</phase>
+				<goals>
+					<goal>validate</goal>
+				</goals>
+			</execution>
+	    </executions>
+	  </plugin>
+
+      <!-- code coverage on tests -->
+      <plugin>
+		<groupId>org.jacoco</groupId>
+		<artifactId>jacoco-maven-plugin</artifactId>
+		<version>0.8.6</version>
+		<executions>
+			<execution>
+				<id>default-prepare-agent</id>
+				<goals>
+					<goal>prepare-agent</goal>
+				</goals>
+			</execution>
+			<execution>
+				<id>default-report</id>
+				<phase>verify</phase>
+				<goals>
+					<goal>report</goal>
+				</goals>
+			</execution>
+		</executions>
+	  </plugin>
     </plugins>
   </build>
   <repositories>
