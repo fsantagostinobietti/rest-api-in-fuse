@@ -51,7 +51,7 @@ public class CountryInfoRouter extends RouteBuilder {
         	.to("direct:getCountryInfo");
         
         
-        from("direct:getCountryInfo")
+        from("direct:getCountryInfo").routeId("GetCountryInfo")
         	
         	// create request bean (jaxb annotated)
         	.bean(PrepareRequestJAXB.class)

@@ -15,6 +15,7 @@ import org.apache.camel.Produce;
 import org.apache.camel.ProducerTemplate;
 import org.apache.camel.component.mock.MockEndpoint;
 import org.apache.camel.test.spring.CamelSpringBootRunner;
+import org.apache.camel.test.spring.EnableRouteCoverage;
 import org.apache.camel.test.spring.MockEndpoints;
 import org.apache.camel.test.spring.MockEndpointsAndSkip;
 import org.junit.Test;
@@ -37,6 +38,7 @@ import com.redhat.fuse.boosters.rest.http.service.CountryISOCodeCache;
 @SpringBootTest(webEnvironment = WebEnvironment.NONE) // do not provide any web environment
 //If we want to reset the Camel context and mock endpoints between test methods automatically:
 //@DirtiesContext(classMode = ClassMode.AFTER_EACH_TEST_METHOD)
+@EnableRouteCoverage	// enable coverage stats for camel routes
 @MockEndpointsAndSkip("spring-ws:*")
 public class RoutesTest {
 	

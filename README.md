@@ -19,3 +19,13 @@ Try it in your browser
 Point your browser to ```http://localhost:8080```.
 
 In this landing page you'll get links to invoke REST endpoint and swagger documentation.
+
+
+Build and Test
+---
+```
+$ mvn clean verify 
+```
+This command builds the application and invokes unit tests on it.
+
+As final step it generates a JaCoCO report for code coverage under ```target/site/jacoco```.

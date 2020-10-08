@@ -25,6 +25,7 @@ public class CountryISOCodesReloader extends RouteBuilder {
 		from(   csvFileURI 
 				+ "&noop=true"	// do not modify file
 				+ "&idempotentKey=${file:name}-${file:modified}")	// reload file when changed
+		.routeId("CountryISOCodesReloader")
 		.unmarshal(
 				// convert csv entries into java Map
 				new CsvDataFormat().setUseMaps(true)
