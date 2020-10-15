@@ -5,6 +5,7 @@
   <artifactId>rest-api-fuse</artifactId>
   <version>1.0.0</version>
   <name>Fuse :: Boosters :: Rest HTTP</name>
+  
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -14,6 +15,7 @@
     <arquillian.cube.version>1.17.1</arquillian.cube.version>
     <arquillian.version>1.4.0.Final</arquillian.version>
   </properties>
+  
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -32,6 +34,7 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+  
   <dependencies>
 	<!-- javaee-api - only for JDK 9+ 
 	<dependency>
@@ -70,14 +73,11 @@
       <artifactId>webjars-locator</artifactId>
       <version>0.33</version>
     </dependency>
+    
     <!-- camel -->
     <dependency>
       <groupId>org.apache.camel</groupId>
       <artifactId>camel-spring-boot-starter</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.camel</groupId>
-      <artifactId>camel-http-starter</artifactId>
     </dependency>
     <dependency>
       <groupId>org.apache.camel</groupId>
@@ -93,19 +93,15 @@
     </dependency>
 	<dependency>
 	    <groupId>org.apache.camel</groupId>
-	    <artifactId>camel-spring-ws</artifactId>
+	    <artifactId>camel-spring-ws-starter</artifactId>
 	</dependency>
 	<dependency>
 	    <groupId>org.apache.camel</groupId>
-	    <artifactId>camel-jaxb</artifactId>
+	    <artifactId>camel-jaxb-starter</artifactId>
 	</dependency>
 	<dependency>
 	    <groupId>org.apache.camel</groupId>
-	    <artifactId>camel-jacksonxml</artifactId>
-	</dependency>
-	<dependency>
-	    <groupId>org.apache.camel</groupId>
-	    <artifactId>camel-xstream</artifactId>  <!-- enable bean<->xml automatic conversion  -->
+	    <artifactId>camel-jacksonxml-starter</artifactId>
 	</dependency>
 	<dependency>
 	    <groupId>org.apache.camel</groupId>
@@ -113,18 +109,20 @@
 	</dependency>
 	<dependency>
 		<groupId>org.apache.camel</groupId>
-		<artifactId>camel-csv</artifactId>
+		<artifactId>camel-csv-starter</artifactId>
 	</dependency>
     <dependency>
       <groupId>io.fabric8</groupId>
       <artifactId>openshift-client</artifactId>
     </dependency>
+    
     <!-- Dev -->
 	<dependency>
 	    <groupId>org.springframework.boot</groupId>
 	    <artifactId>spring-boot-devtools</artifactId>
 	    <optional>true</optional>
 	</dependency>
+	
     <!-- Test -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
@@ -164,6 +162,7 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+  
   <build>
     <plugins>
       <!-- Core plugins -->
