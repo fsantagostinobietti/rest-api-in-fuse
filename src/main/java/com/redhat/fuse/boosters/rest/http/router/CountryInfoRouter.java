@@ -2,12 +2,10 @@ package com.redhat.fuse.boosters.rest.http.router;
 
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
-import org.apache.camel.model.rest.RestBindingMode;
-import org.springframework.beans.factory.annotation.Value;
+import org.apache.camel.converter.jaxb.JaxbDataFormat;
 import org.springframework.stereotype.Component;
 
 import com.redhat.fuse.boosters.rest.http.model.Country;
-import com.redhat.fuse.boosters.rest.http.model.Greetings;
 import com.redhat.fuse.boosters.rest.http.router.process.AddISOCode;
 import com.redhat.fuse.boosters.rest.http.router.process.GenericExceptionHandler;
 import com.redhat.fuse.boosters.rest.http.router.process.InvalidInputError;
@@ -51,12 +49,16 @@ public class CountryInfoRouter extends RouteBuilder {
         	.to("direct:getCountryInfo");
         
         
+        JaxbDataFormat jaxb = new JaxbDataFormat();
+        jaxb.setMustBeJAXBElement(false);
+        jaxb.setContentTypeHeader(false);
+        
         from("direct:getCountryInfo").routeId("GetCountryInfo")
         	
         	// create request bean (jaxb annotated)
         	.bean(PrepareRequestJAXB.class)
-        	// Camel automatically translates jaxb bean into xml
-        	.log("Request XML: ${body}")
+        	// converts jaxb bean into xml
+        	.marshal(jaxb).log("Request XML: ${body}")
         	
         	// invoke remote soap service using 'spring-ws'. It's responsible of adding 
         	// soap envelope to xml request
