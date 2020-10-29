@@ -1,8 +1,11 @@
 package com.redhat.fuse.boosters.rest.http.router;
 
+import javax.annotation.Resource;
+
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.converter.jaxb.JaxbDataFormat;
+import org.apache.camel.spi.DataFormatFactory;
 import org.springframework.stereotype.Component;
 
 import com.redhat.fuse.boosters.rest.http.model.Country;
@@ -18,6 +21,9 @@ import com.redhat.fuse.boosters.rest.http.router.process.ResponseMapping;
  */
 @Component
 public class CountryInfoRouter extends RouteBuilder {
+	
+	@Resource(name="jaxb-dataformat-factory") // defined in camel-jaxb-starter
+	DataFormatFactory jaxbFactory;
 
     @Override
     public void configure() throws Exception {
@@ -49,9 +55,8 @@ public class CountryInfoRouter extends RouteBuilder {
         	.to("direct:getCountryInfo");
         
         
-        JaxbDataFormat jaxb = new JaxbDataFormat();
-        jaxb.setMustBeJAXBElement(false);
-        jaxb.setContentTypeHeader(false);
+        // auto-configured JAXB data format
+        JaxbDataFormat jaxb = (JaxbDataFormat) jaxbFactory.newInstance();
         
         from("direct:getCountryInfo").routeId("GetCountryInfo")
         	
