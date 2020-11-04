@@ -5,11 +5,13 @@ import javax.annotation.Resource;
 import org.apache.camel.Exchange;
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.converter.jaxb.JaxbDataFormat;
+import org.apache.camel.model.rest.RestParamType;
 import org.apache.camel.spi.DataFormatFactory;
 import org.springframework.stereotype.Component;
 
 import com.redhat.fuse.boosters.rest.http.model.Country;
 import com.redhat.fuse.boosters.rest.http.router.process.AddISOCode;
+import com.redhat.fuse.boosters.rest.http.router.process.AggregateCountries;
 import com.redhat.fuse.boosters.rest.http.router.process.GenericExceptionHandler;
 import com.redhat.fuse.boosters.rest.http.router.process.InvalidInputError;
 import com.redhat.fuse.boosters.rest.http.router.process.PrepareRequestJAXB;
@@ -53,6 +55,21 @@ public class CountryInfoRouter extends RouteBuilder {
         	// forward to route 'getCountryInfo'
         	.route().log("Country name: ${header.country_name}")
         	.to("direct:getCountryInfo");
+        
+        /*
+         * '/countries?name={}&name={}' - gets info for a list of countries 
+         */
+        rest()
+        	.get("/countries?name={}")
+        	// swagger doc for 'ndg' parameter
+	        .param().name("name").required(true).type(RestParamType.query).dataType("array").arrayType("string").endParam()
+        	// forward to route 'getCountryInfo'
+        	.route().log("Country name: ${header.name}")
+        	// use splitter/aggregator pattern
+        	.split(header("name"), new AggregateCountries())
+        	.parallelProcessing()
+        		.setHeader("country_name", bodyAs(String.class))
+        		.to("direct:getCountryInfo");
         
         
         // auto-configured JAXB data format
