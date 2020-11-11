@@ -5,7 +5,7 @@ public class Country {
 	String name;
 	String isoCode;
 	long population;
-	
+	String currency;
 
 	
 	/*
@@ -34,5 +34,13 @@ public class Country {
 	public void setIsoCode(String isoCode) {
 		this.isoCode = isoCode;
 	}
-	
+
+	public String getCurrency() {
+		return currency;
+	}
+
+	public void setCurrency(String currency) {
+		this.currency = currency;
+	}
+
 }

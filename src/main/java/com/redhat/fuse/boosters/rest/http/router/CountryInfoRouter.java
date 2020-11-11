@@ -11,7 +11,9 @@ import org.springframework.stereotype.Component;
 
 import com.redhat.fuse.boosters.rest.http.model.Country;
 import com.redhat.fuse.boosters.rest.http.router.process.AddISOCode;
+import com.redhat.fuse.boosters.rest.http.router.process.AggregateAllCountryInfo;
 import com.redhat.fuse.boosters.rest.http.router.process.AggregateCountries;
+import com.redhat.fuse.boosters.rest.http.router.process.EconomicResponseMapping;
 import com.redhat.fuse.boosters.rest.http.router.process.GenericExceptionHandler;
 import com.redhat.fuse.boosters.rest.http.router.process.InvalidInputError;
 import com.redhat.fuse.boosters.rest.http.router.process.PrepareRequestJAXB;
@@ -56,6 +58,30 @@ public class CountryInfoRouter extends RouteBuilder {
         	.route().log("Country name: ${header.country_name}")
         	.to("direct:getCountryInfo");
         
+        
+        /*
+         * '/full/country' - gets full country info (with additional economic info)
+         */
+        rest("/full/country")
+	    	// inject path param in header as 'country_name' 
+	    	.get("/{country_name}")
+	    	// swagger definitions
+	    	.id("GetInfo").description("Get full country info")
+	    	.param().name("country_name").description("Country name").endParam()
+	    	.outType(Country.class)
+	    	.responseMessage().code(500).message("Internal error").endResponseMessage()
+	    	.responseMessage().code(404).message("Country not found").endResponseMessage()
+	    	// forward to route 'getCountryInfo'
+	    	.route().log("Country name: ${header.country_name}")
+        	.multicast(new AggregateAllCountryInfo()) // TODO .parallelProcessing().stopOnAggregateException()
+        		.to("direct:getCountryInfo")
+        		.pipeline()
+        			.setHeader("economic_country_name", header("country_name")) // adapter
+        			.to("direct:getCountryEconomicInfo")
+        		.end();
+        	
+        
+        
         /*
          * '/countries?name={}&name={}' - gets info for a list of countries 
          */
@@ -69,7 +95,13 @@ public class CountryInfoRouter extends RouteBuilder {
         	.split(header("name"), new AggregateCountries())
         	.parallelProcessing()
         		.setHeader("country_name", bodyAs(String.class))
-        		.to("direct:getCountryInfo");
+        		.to("direct:getCountryInfo"); 
+        		
+        
+        
+        /*
+         * internal camel routes
+         */
         
         
         // auto-configured JAXB data format
@@ -78,7 +110,7 @@ public class CountryInfoRouter extends RouteBuilder {
         from("direct:getCountryInfo").routeId("GetCountryInfo")
         	
         	// create request bean (jaxb annotated)
-        	.bean(PrepareRequestJAXB.class)
+        	.bean(PrepareRequestJAXB.class, "evaluate")
         	// converts jaxb bean into xml
         	.marshal(jaxb).log("Request XML: ${body}")
         	
@@ -103,6 +135,23 @@ public class CountryInfoRouter extends RouteBuilder {
 		    .end();
         	
       
+        from("direct:getCountryEconomicInfo").routeId("GetCountryEconomicInfo")
+        
+	        // create request bean (jaxb annotated)
+	    	.bean(PrepareRequestJAXB.class, "evaluateEconomic")
+	    	// converts jaxb bean into xml
+	    	.marshal(jaxb).log("Request XML: ${body}")
+	    	
+	    	// invoke remote soap service using 'spring-ws'. It's responsible of adding 
+	    	// soap envelope to xml request
+	    	.to("spring-ws:{{ws.uri}}").log("Response XML: ${body}")
+	    	
+	    	// trick: convert xml response into java Map (simpler to parse and without namespaces)  
+	    	.unmarshal().jacksonxml(java.util.Map.class).log("Response Map: ${body}")
+	    	
+	    	// create REST response (this is actual mapping logic)
+        	.bean(EconomicResponseMapping.class);
+        
     }
 
 }

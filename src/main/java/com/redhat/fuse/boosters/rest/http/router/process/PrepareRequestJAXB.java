@@ -13,4 +13,9 @@ public class PrepareRequestJAXB {
 		return request;
 	}
 
+	public GetCountryRequest evaluateEconomic(@Header("economic_country_name") String countryName) {
+		GetCountryRequest request = new GetCountryRequest();
+		request.setName(countryName);
+		return request;
+	}
 }
