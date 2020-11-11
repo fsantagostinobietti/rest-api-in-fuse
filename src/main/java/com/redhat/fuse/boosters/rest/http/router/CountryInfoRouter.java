@@ -10,10 +10,10 @@ import org.apache.camel.spi.DataFormatFactory;
 import org.springframework.stereotype.Component;
 
 import com.redhat.fuse.boosters.rest.http.model.Country;
+import com.redhat.fuse.boosters.rest.http.model.CountryNotFoundException;
 import com.redhat.fuse.boosters.rest.http.router.process.AddISOCode;
 import com.redhat.fuse.boosters.rest.http.router.process.AggregateAllCountryInfo;
 import com.redhat.fuse.boosters.rest.http.router.process.AggregateCountries;
-import com.redhat.fuse.boosters.rest.http.router.process.EconomicResponseMapping;
 import com.redhat.fuse.boosters.rest.http.router.process.GenericExceptionHandler;
 import com.redhat.fuse.boosters.rest.http.router.process.InvalidInputError;
 import com.redhat.fuse.boosters.rest.http.router.process.PrepareRequestJAXB;
@@ -34,14 +34,14 @@ public class CountryInfoRouter extends RouteBuilder {
     	
         /*
          * global error handling 
-         */
+         */ 
         onException(Exception.class)
         	.handled(true)	// stop exception propagation
         	.bean(GenericExceptionHandler.class)
         	.setHeader(Exchange.HTTP_RESPONSE_CODE, constant(500));
-
-        
-        
+		
+		 
+    	
         /*
          * '/country' - gets few info for the named country 
          */
@@ -56,6 +56,11 @@ public class CountryInfoRouter extends RouteBuilder {
         	.responseMessage().code(404).message("Country not found").endResponseMessage()
         	// forward to route 'getCountryInfo'
         	.route().log("Country name: ${header.country_name}")
+        	.onException(CountryNotFoundException.class)
+				.handled(true)	// stop exception propagation
+		    	.bean(InvalidInputError.class)
+				.setHeader(Exchange.HTTP_RESPONSE_CODE, constant(404))
+			.end()
         	.to("direct:getCountryInfo");
         
         
@@ -73,7 +78,13 @@ public class CountryInfoRouter extends RouteBuilder {
 	    	.responseMessage().code(404).message("Country not found").endResponseMessage()
 	    	// forward to route 'getCountryInfo'
 	    	.route().log("Country name: ${header.country_name}")
-        	.multicast(new AggregateAllCountryInfo()) // TODO .parallelProcessing().stopOnAggregateException()
+	    	// intercept exception after stopOnException()
+	    	.onException(CountryNotFoundException.class)
+				.handled(true)	// stop exception propagation
+		    	.bean(InvalidInputError.class)
+				.setHeader(Exchange.HTTP_RESPONSE_CODE, constant(404))
+			.end()
+        	.multicast(new AggregateAllCountryInfo()).parallelProcessing().stopOnException()
         		.to("direct:getCountryInfo")
         		.pipeline()
         			.setHeader("economic_country_name", header("country_name")) // adapter
@@ -91,10 +102,15 @@ public class CountryInfoRouter extends RouteBuilder {
 	        .param().name("name").required(true).type(RestParamType.query).dataType("array").arrayType("string").endParam()
         	// forward to route 'getCountryInfo'
         	.route().log("Country name: ${header.name}")
+        	// mute exception from 'direct:getCountryInfo'
+        	.onException(CountryNotFoundException.class)
+				.handled(true)	// stop exception propagation
+		    	.setBody(constant(null)) // empty body
+			.end()
         	// use splitter/aggregator pattern
         	.split(header("name"), new AggregateCountries())
         	.parallelProcessing()
-        		.setHeader("country_name", bodyAs(String.class))
+        		.setHeader("country_name", bodyAs(String.class))  // adapter
         		.to("direct:getCountryInfo"); 
         		
         
@@ -108,6 +124,9 @@ public class CountryInfoRouter extends RouteBuilder {
         JaxbDataFormat jaxb = (JaxbDataFormat) jaxbFactory.newInstance();
         
         from("direct:getCountryInfo").routeId("GetCountryInfo")
+        
+        	// let exception propagate to caller route
+        	.errorHandler(noErrorHandler())
         	
         	// create request bean (jaxb annotated)
         	.bean(PrepareRequestJAXB.class, "evaluate")
@@ -121,21 +140,17 @@ public class CountryInfoRouter extends RouteBuilder {
         	// trick: convert xml response into java Map (simpler to parse and without namespaces)  
         	.unmarshal().jacksonxml(java.util.Map.class).log("Response Map: ${body}")
         	
-        	.choice()
-        		// empty response produce an error message
-        		.when(body().isEqualTo("{}"))
-	        		.bean(InvalidInputError.class)
-        			.setHeader(Exchange.HTTP_RESPONSE_CODE, constant(404))
-	        	// valid response
-        		.otherwise()
-	        		// create REST response (this is actual mapping logic)
-		        	.bean(ResponseMapping.class)
-		        	// enrich response with info from in-memory cache
-		        	.enrich("bean:countryISOCodeCacheService?method=lookupCode", new AddISOCode())
-		    .end();
+        	// create REST response (this is actual mapping logic)
+        	.bean(ResponseMapping.class, "evaluate")
+        	// enrich response with info from in-memory cache
+        	.enrich("bean:countryISOCodeCacheService?method=lookupCode", new AddISOCode());
         	
+         	
       
         from("direct:getCountryEconomicInfo").routeId("GetCountryEconomicInfo")
+        
+        	// let exception propagate to caller route
+        	.errorHandler(noErrorHandler())
         
 	        // create request bean (jaxb annotated)
 	    	.bean(PrepareRequestJAXB.class, "evaluateEconomic")
@@ -150,7 +165,7 @@ public class CountryInfoRouter extends RouteBuilder {
 	    	.unmarshal().jacksonxml(java.util.Map.class).log("Response Map: ${body}")
 	    	
 	    	// create REST response (this is actual mapping logic)
-        	.bean(EconomicResponseMapping.class);
+        	.bean(ResponseMapping.class, "evaluateEconomic");
         
     }
 

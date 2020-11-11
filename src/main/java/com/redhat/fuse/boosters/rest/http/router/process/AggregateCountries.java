@@ -13,17 +13,17 @@ public class AggregateCountries implements AggregationStrategy {
 	@Override
 	public Exchange aggregate(Exchange oldExchange, Exchange newExchange) {
 		ArrayList<Country> countries = null;
-		if (oldExchange==null) {
-			oldExchange = newExchange;
+		if (oldExchange==null)
 			countries = new ArrayList<Country>();
-		} else
-		if (newExchange!=null)
+		else
 			countries = oldExchange.getIn().getBody(ArrayList.class);
 		
 		Country newCountry = newExchange.getIn().getBody(Country.class);
-		countries.add(newCountry);
-		oldExchange.getIn().setBody(countries);
-		return oldExchange;
+		if (newCountry!=null) 
+			countries.add(newCountry);
+		
+		newExchange.getIn().setBody(countries);
+		return newExchange;
 	}
 
 }
