@@ -15,7 +15,6 @@ import com.redhat.fuse.boosters.rest.http.router.process.AddISOCode;
 import com.redhat.fuse.boosters.rest.http.router.process.AggregateAllCountryInfo;
 import com.redhat.fuse.boosters.rest.http.router.process.AggregateCountries;
 import com.redhat.fuse.boosters.rest.http.router.process.GenericExceptionHandler;
-import com.redhat.fuse.boosters.rest.http.router.process.InvalidInputError;
 import com.redhat.fuse.boosters.rest.http.router.process.PrepareRequestJAXB;
 import com.redhat.fuse.boosters.rest.http.router.process.ResponseMapping;
 
@@ -58,7 +57,7 @@ public class CountryInfoRouter extends RouteBuilder {
         	.route().log("Country name: ${header.country_name}")
         	.onException(CountryNotFoundException.class)
 				.handled(true)	// stop exception propagation
-		    	.bean(InvalidInputError.class)
+				.bean(GenericExceptionHandler.class)
 				.setHeader(Exchange.HTTP_RESPONSE_CODE, constant(404))
 			.end()
         	.to("direct:getCountryInfo");
@@ -81,7 +80,7 @@ public class CountryInfoRouter extends RouteBuilder {
 	    	// intercept exception after stopOnException()
 	    	.onException(CountryNotFoundException.class)
 				.handled(true)	// stop exception propagation
-		    	.bean(InvalidInputError.class)
+				.bean(GenericExceptionHandler.class)
 				.setHeader(Exchange.HTTP_RESPONSE_CODE, constant(404))
 			.end()
         	.multicast(new AggregateAllCountryInfo()).parallelProcessing().stopOnException()

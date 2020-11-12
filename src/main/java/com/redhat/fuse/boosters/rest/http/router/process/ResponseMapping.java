@@ -8,10 +8,12 @@ import com.redhat.fuse.boosters.rest.http.model.Country;
 import com.redhat.fuse.boosters.rest.http.model.CountryNotFoundException;
 
 public class ResponseMapping  {
+	
+	final String INVALID_COUNTRY = "Invalid country! Hint: try 'Spain', 'Poland' or 'United Kingdom'";
 
 	public Country evaluate(@Body Map<String,?> response) throws Exception {
 		if (response.isEmpty())
-			throw new CountryNotFoundException();
+			throw new CountryNotFoundException(INVALID_COUNTRY);
 		Map<?,?> country = (Map<?,?>) response.get("country");
 		
 		Country countryBean = new Country();
@@ -23,7 +25,7 @@ public class ResponseMapping  {
 
 	public Country evaluateEconomic(@Body Map<String,?> response) throws Exception {
 		if (response.isEmpty())
-			throw new CountryNotFoundException();
+			throw new CountryNotFoundException(INVALID_COUNTRY);
 		Map<?,?> country = (Map<?,?>) response.get("country");
 		
 		Country countryBean = new Country();

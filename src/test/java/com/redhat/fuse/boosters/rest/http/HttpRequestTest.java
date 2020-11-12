@@ -20,7 +20,7 @@ import org.springframework.http.ResponseEntity;
 
 import com.redhat.fuse.boosters.rest.http.model.Country;
 import com.redhat.fuse.boosters.rest.http.model.Greetings;
-import com.redhat.fuse.boosters.rest.http.router.process.InvalidInputError;
+import com.redhat.fuse.boosters.rest.http.model.Error;
 
 /**
  * Unit tests for REST endpoints
@@ -64,7 +64,7 @@ public class HttpRequestTest {
 					outCountry.setName("Spain");
 					exchange.getIn().setBody(outCountry, Country.class);
 				} else {
-					exchange.getIn().setBody( new InvalidInputError().evaluate(), Error.class);
+					exchange.getIn().setBody( new Error("Invalid Country"));
 					exchange.getIn().setHeader(Exchange.HTTP_RESPONSE_CODE, 404);
 				}
 				

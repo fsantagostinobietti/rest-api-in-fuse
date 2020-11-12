@@ -12,8 +12,8 @@ public class GenericExceptionHandler {
 	
 	public Error evaluate(@ExchangeProperty(Exchange.EXCEPTION_CAUGHT)  Exception cause) {
 		// retrieve the caught message
-		logger.error(cause.getMessage(), cause);
+		logger.error(cause.getMessage()); //, cause);
 		// error response
-		return new Error( cause.toString() );
+		return new Error( cause.getMessage() );
 	}
 }
