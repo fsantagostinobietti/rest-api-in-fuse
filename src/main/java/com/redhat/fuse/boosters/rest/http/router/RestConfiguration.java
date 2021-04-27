@@ -4,6 +4,8 @@ import org.apache.camel.builder.RouteBuilder;
 import org.apache.camel.model.rest.RestBindingMode;
 import org.springframework.stereotype.Component;
 
+import com.redhat.fuse.boosters.rest.http.CamelRouteTimerNotifier;
+
 /**
  * Global REST configuration
  *
@@ -32,6 +34,9 @@ public class RestConfiguration extends RouteBuilder {
                 .apiContextRouteId("doc-api")
             	.component("servlet")*/
 		
+        // register execution timer for Camel routes
+        // log level controlled in application.properties
+        getContext().getManagementStrategy().addEventNotifier(new CamelRouteTimerNotifier());
 	}
 
 }

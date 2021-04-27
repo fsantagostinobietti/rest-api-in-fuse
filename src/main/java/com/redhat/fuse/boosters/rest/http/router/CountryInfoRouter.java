@@ -56,7 +56,7 @@ public class CountryInfoRouter extends RouteBuilder {
         	.responseMessage().code(500).message("Internal error").endResponseMessage()
         	.responseMessage().code(404).message("Country not found").endResponseMessage()
         	// forward to route 'getCountryInfo'
-        	.route().log("Country name: ${header.country_name}")
+        	.route()
         	.onException(CountryNotFoundException.class)
 				.handled(true)	// stop exception propagation
 				.bean(GenericExceptionHandler.class)
@@ -78,7 +78,7 @@ public class CountryInfoRouter extends RouteBuilder {
 	    	.responseMessage().code(500).message("Internal error").endResponseMessage()
 	    	.responseMessage().code(404).message("Country not found").endResponseMessage()
 	    	// forward to route 'getCountryInfo'
-	    	.route().log("Country name: ${header.country_name}")
+	    	.route()
 	    	// intercept exception after stopOnException()
 	    	.onException(CountryNotFoundException.class)
 				.handled(true)	// stop exception propagation
@@ -99,11 +99,13 @@ public class CountryInfoRouter extends RouteBuilder {
          * '/countries?name={}&name={}' - gets info for a list of countries 
          */
         rest()
+        	// inject path param in header as 'name'
         	.get("/countries?name={}")
+        	.id("GetCountriesInfo").description("Get multiple country info")
         	// swagger doc for 'ndg' parameter
 	        .param().name("name").required(true).type(RestParamType.query).dataType("array").arrayType("string").endParam()
         	// forward to route 'getCountryInfo'
-        	.route().log("Country name: ${header.name}")
+        	.route()
         	// mute exception from 'direct:getCountryInfo'
         	.onException(CountryNotFoundException.class)
 				.handled(true)	// stop exception propagation
@@ -133,14 +135,14 @@ public class CountryInfoRouter extends RouteBuilder {
         	// create request bean (jaxb annotated)
         	.bean(PrepareRequestJAXB.class, "evaluate")
         	// converts jaxb bean into xml
-        	.marshal(jaxb).log("Request XML: ${body}")
+        	.marshal(jaxb)
         	
         	// invoke remote soap service using 'spring-ws'. It's responsible of adding 
         	// soap envelope to xml request
-        	.to("spring-ws:{{ws.uri}}").log("Response XML: ${body}")
+        	.to("spring-ws:{{ws.uri}}") //.log("Response XML: ${body}")
         	
         	// trick: convert xml response into java Map (simpler to parse and without namespaces)  
-        	.unmarshal().jacksonxml(java.util.Map.class).log("Response Map: ${body}")
+        	.unmarshal().jacksonxml(java.util.Map.class) //.log("Response Map: ${body}")
         	
         	// create REST response (this is actual mapping logic)
         	.bean(ResponseMapping.class, "evaluate")
@@ -157,14 +159,14 @@ public class CountryInfoRouter extends RouteBuilder {
 	        // create request bean (jaxb annotated)
 	    	.bean(PrepareRequestJAXB.class, "evaluateEconomic")
 	    	// converts jaxb bean into xml
-	    	.marshal(jaxb).log("Request XML: ${body}")
+	    	.marshal(jaxb)
 	    	
 	    	// invoke remote soap service using 'spring-ws'. It's responsible of adding 
 	    	// soap envelope to xml request
-	    	.to("spring-ws:{{ws.uri}}").log("Response XML: ${body}")
+	    	.to("spring-ws:{{ws.uri}}")  //.log("Response XML: ${body}")
 	    	
 	    	// trick: convert xml response into java Map (simpler to parse and without namespaces)  
-	    	.unmarshal().jacksonxml(java.util.Map.class).log("Response Map: ${body}")
+	    	.unmarshal().jacksonxml(java.util.Map.class) //.log("Response Map: ${body}")
 	    	
 	    	// create REST response (this is actual mapping logic)
         	.bean(ResponseMapping.class, "evaluateEconomic");
