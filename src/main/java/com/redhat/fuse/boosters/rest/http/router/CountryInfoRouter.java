@@ -9,6 +9,7 @@ import org.apache.camel.model.rest.RestParamType;
 import org.apache.camel.spi.DataFormatFactory;
 import org.springframework.stereotype.Component;
 
+import com.redhat.fuse.boosters.rest.http.CustomThreadPoolConfig;
 import com.redhat.fuse.boosters.rest.http.model.Country;
 import com.redhat.fuse.boosters.rest.http.model.CountryNotFoundException;
 import com.redhat.fuse.boosters.rest.http.router.process.AddISOCode;
@@ -17,6 +18,7 @@ import com.redhat.fuse.boosters.rest.http.router.process.AggregateCountries;
 import com.redhat.fuse.boosters.rest.http.router.process.GenericExceptionHandler;
 import com.redhat.fuse.boosters.rest.http.router.process.PrepareRequestJAXB;
 import com.redhat.fuse.boosters.rest.http.router.process.ResponseMapping;
+
 
 /**
  *  Camel REST DSL route that implements country info service.
@@ -83,7 +85,8 @@ public class CountryInfoRouter extends RouteBuilder {
 				.bean(GenericExceptionHandler.class)
 				.setHeader(Exchange.HTTP_RESPONSE_CODE, constant(404))
 			.end()
-        	.multicast(new AggregateAllCountryInfo()).parallelProcessing().stopOnException()
+        	.multicast(new AggregateAllCountryInfo())
+        	.parallelProcessing().executorServiceRef(CustomThreadPoolConfig.ID).stopOnException()
         		.to("direct:getCountryInfo")
         		.pipeline()
         			.setHeader("economic_country_name", header("country_name")) // adapter
@@ -108,7 +111,7 @@ public class CountryInfoRouter extends RouteBuilder {
 			.end()
         	// use splitter/aggregator pattern
         	.split(header("name"), new AggregateCountries())
-        	.parallelProcessing()
+        	.parallelProcessing().executorServiceRef(CustomThreadPoolConfig.ID)
         		.setHeader("country_name", bodyAs(String.class))  // adapter
         		.to("direct:getCountryInfo"); 
         		
